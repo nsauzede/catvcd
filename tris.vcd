@@ -1,0 +1,65 @@
+$date
+     Aug 08, 2006       17:09:38
+$end
+
+$version
+              SystemC 2.1.v1 --- Mar 29 2006 15:54:11
+$end
+
+$timescale
+     1 ps
+$end
+
+$scope module SystemC $end
+$var wire    1  aaa  clk       $end
+$var wire   32  aab  a [31:0]  $end
+$var wire    1  aac  oe       $end
+$var wire   32  aad  y [31:0]  $end
+$upscope $end
+$enddefinitions  $end
+
+$comment
+All initial values are dumped below at time 0 sec = 0 timescale units.
+$end
+
+$dumpvars
+0aaa
+b0 aab
+0aac
+bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ aad
+$end
+
+#1000
+1aaa
+1aac
+b0 aad
+
+#2000
+0aaa
+
+#3000
+1aaa
+b1 aab
+b1 aad
+
+#4000
+0aaa
+
+#5000
+1aaa
+b10 aab
+0aac
+bZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ aad
+
+#6000
+0aaa
+
+#7000
+1aaa
+b11 aab
+1aac
+b11 aad
+
+#8000
+0aaa
+
