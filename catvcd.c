@@ -82,9 +82,12 @@ int main( int argc, char *argv[])
 			char name[1024], title[1024];
 			
 			sscanf( buf, "%*s %*s %*s %s %s %*s", name, title);
-			strncpy( sigs[nsig].name, name, sizeof( sigs[nsig].name));
-			strncpy( sigs[nsig].title, title, sizeof( sigs[nsig].title));
-			nsig++;
+			if (nsig < MAXSIG) {
+				strncpy( sigs[nsig].name, name, sizeof( sigs[nsig].name));
+				strncpy( sigs[nsig].title, title, sizeof( sigs[nsig].title));
+				printf("added sig %d %s %s\n", nsig, name, title);
+				nsig++;
+			}
 		}
 		else if (!strcmp( token, "$dumpvars"))
 		{
