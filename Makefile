@@ -1,12 +1,20 @@
-TARGET= catvcd
-CFLAGS=	-Wall -g -O0
+TARGET=catvcd
+TARGET+=catvcd2
+
+CFLAGS=-Wall -g -O0
+CXXFLAGS=-Wall -Werror -Wextra -pedantic -std=c++11 -g -O0
 INSTALL_PREFIX=	$(USR)/local/bin
 CP=	cp -f
 
-all:    $(TARGET)
+all: $(TARGET)
+
+install: all
+	$(CP) $(TARGET) $(INSTALL_PREFIX)
 
 clean:
 	$(RM) $(TARGET)
 
-install:	all
-	$(CP) $(TARGET) $(INSTALL_PREFIX)
+check: catvcd2
+	./catvcd2 cpu86.vcd
+
+clobber: clean
