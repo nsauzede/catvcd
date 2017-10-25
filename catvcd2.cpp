@@ -94,6 +94,21 @@ private:
 		uint32_t pc = cs * 16 + ip;
 		if (pc >= 0xffffa) done = true;
 		static int last_latchabus = 0;
+//		if (current_state == "sexecute") {
+		if (current_state == "sdecode") {
+//		if (current_state == "") {
+//			printf("exec\n");
+//			printf("decode\n");
+//			printf("curr=%s next=%s\n", current_state.c_str(), next_state.c_str());
+			if (m_queue.size() > 0) {
+//				printf("queue len=%d\n", (int)m_queue.size());
+//				m_opcode = m_queue;
+				m_opcode.insert(m_opcode.end(), m_queue.begin(), m_queue.end());
+				m_queue.clear();
+			}
+		} else {
+//			printf("curr=%s next=%s\n", current_state.c_str(), next_state.c_str());
+		}
 //		uint32_t abus = toint(m_values[m_syms["uut.cpu0.abus[19:0]"]]);
 		int latchabus = toint(m_values[m_syms["uut.cpu0.cpubiu.latchabus"]]);
 		if (last_latchabus == 1 && latchabus == 0) {
@@ -101,8 +116,10 @@ private:
 //			printf("latch next state %s\n", next_state.c_str());
 			uint8_t dbus_in = toint(m_values[m_syms["uut.cpu0.cpubiu.dbus_in[7:0]"]]);
 			if (next_state == "sopcode") {
-//				uint32_t abus = toint(m_values[m_syms["uut.cpu0.abus[19:0]"]]);
-//				printf("push queue %02x at abus=%x\n", (int)dbus_in, (int)abus);
+#if 0
+				uint32_t abus = toint(m_values[m_syms["uut.cpu0.abus[19:0]"]]);
+				printf("push queue %02x at abus=%x\n", (int)dbus_in, (int)abus);
+#endif
 				m_queue.push_back(dbus_in);
 			}
 		}
@@ -110,7 +127,7 @@ private:
 		if (last_clrop == 0 && clrop == 1) {
 			if (m_time == 0)
 				return;
-			printf("\n");
+//			printf("\n");
 			printf("%3" PRIu64 ":", m_time / 1000000);
 			printf("cs=%04" PRIx32 " ip=%04" PRIx32 " ", cs, ip);
 			printf("ds=%04" PRIx32 " es=%04" PRIx32 " ", ds, es);
@@ -119,13 +136,14 @@ private:
 			printf("fl=%04" PRIx32 " ", flags);
 			print_flags(flags);
 //			printf("next_state=%s", next_state.c_str());
-#if 0
+#if 1
 			for (auto& it : m_opcode) {
 				printf(" %02" PRIx8, it);
 			}
-			m_opcode = m_queue;
-			m_queue.clear();
-			printf("\n");
+			m_opcode.clear();
+//			m_opcode = m_queue;
+//			m_queue.clear();
+//			printf("\n");
 #endif
 #if 0
 			for (auto& it : m_queue) {
@@ -135,11 +153,14 @@ private:
 //			printf("\n");
 #endif
 //			old_pc = pc;
+#if 0
 			for (auto& it : m_queue) {
 				printf("%02" PRIx8 " ", it);
 			}
 			m_queue.clear();
 //			printf("\n");
+#endif
+			printf("\n");
 		}
 		last_clrop = clrop;
 	}
