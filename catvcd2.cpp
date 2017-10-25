@@ -80,21 +80,6 @@ private:
 		uint32_t cs, ip, ds, es, ax, cx, si, di, flags;
 		std::string current_state = m_values[m_syms["uut.cpu0.cpuproc.current_state"]];
 		std::string next_state = m_values[m_syms["uut.cpu0.cpuproc.next_state"]];
-		static int last_latchabus = 0;
-//		uint32_t abus = toint(m_values[m_syms["uut.cpu0.abus[19:0]"]]);
-		int latchabus = toint(m_values[m_syms["uut.cpu0.cpubiu.latchabus"]]);
-		if (last_latchabus == 1 && latchabus == 0) {
-			uint8_t dbus_in = toint(m_values[m_syms["uut.cpu0.cpubiu.dbus_in[7:0]"]]);
-			if (current_state == "sopcode") {
-				m_opcode.push_back(dbus_in);
-//				printf("push opcode %02x at abus=%x\n", (int)dbus_in, (int)abus);
-				printf("%02x ", (int)dbus_in);
-			} else {
-				m_queue.push_back(dbus_in);
-//				printf("push queue %02x at abus=%x\n", (int)dbus_in, (int)abus);
-			}
-		}
-		last_latchabus = latchabus;
 		cs = toint(m_values[m_syms["uut.cpu0.cpudpath.cs_s[15:0]"]]);
 		ip = toint(m_values[m_syms["uut.cpu0.cpudpath.ipreg[15:0]"]]);
 		ds = toint(m_values[m_syms["uut.cpu0.cpudpath.ds_s[15:0]"]]);
@@ -104,15 +89,29 @@ private:
 		si = toint(m_values[m_syms["uut.cpu0.cpudpath.si_s[15:0]"]]);
 		di = toint(m_values[m_syms["uut.cpu0.cpudpath.di_s[15:0]"]]);
 		flags = toint(m_values[m_syms["uut.cpu0.cpudpath.ccbus[15:0]"]]);
+		int clrop = toint(m_values[m_syms["uut.cpu0.clrop"]]);
+		static int last_clrop = 0;
 		uint32_t pc = cs * 16 + ip;
 		if (pc >= 0xffffa) done = true;
-		static uint32_t old_pc = 0xfffff;
-		if (old_pc != pc) {
-//		if (next_state == "sexecute") {
+		static int last_latchabus = 0;
+//		uint32_t abus = toint(m_values[m_syms["uut.cpu0.abus[19:0]"]]);
+		int latchabus = toint(m_values[m_syms["uut.cpu0.cpubiu.latchabus"]]);
+		if (last_latchabus == 1 && latchabus == 0) {
+//			printf("latch cur state %s\n", current_state.c_str());
+//			printf("latch next state %s\n", next_state.c_str());
+			uint8_t dbus_in = toint(m_values[m_syms["uut.cpu0.cpubiu.dbus_in[7:0]"]]);
+			if (next_state == "sopcode") {
+//				uint32_t abus = toint(m_values[m_syms["uut.cpu0.abus[19:0]"]]);
+//				printf("push queue %02x at abus=%x\n", (int)dbus_in, (int)abus);
+				m_queue.push_back(dbus_in);
+			}
+		}
+		last_latchabus = latchabus;
+		if (last_clrop == 0 && clrop == 1) {
 			if (m_time == 0)
 				return;
 			printf("\n");
-//			printf("%" PRIu64 ":", m_time / 1000000);
+			printf("%3" PRIu64 ":", m_time / 1000000);
 			printf("cs=%04" PRIx32 " ip=%04" PRIx32 " ", cs, ip);
 			printf("ds=%04" PRIx32 " es=%04" PRIx32 " ", ds, es);
 			printf("ax=%04" PRIx32 " cx=%04" PRIx32 " ", ax, cx);
@@ -128,15 +127,21 @@ private:
 			m_queue.clear();
 			printf("\n");
 #endif
-#if 1
+#if 0
 			for (auto& it : m_queue) {
 				printf("%02" PRIx8 " ", it);
 			}
 			m_queue.clear();
 //			printf("\n");
 #endif
-			old_pc = pc;
+//			old_pc = pc;
+			for (auto& it : m_queue) {
+				printf("%02" PRIx8 " ", it);
+			}
+			m_queue.clear();
+//			printf("\n");
 		}
+		last_clrop = clrop;
 	}
 	std::string flatten(const std::vector<std::string>& path) const {
 		std::string res;
