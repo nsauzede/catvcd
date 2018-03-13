@@ -30,6 +30,9 @@
 class MyVCDParser : public VCDParser {
 private:
 	uint64_t m_time;
+	int m_donecount;
+	int m_last_clrop;
+	int m_last_latchabus;
 	std::map<std::string, std::string> m_syms;
 	std::unordered_map<std::string, std::string> m_names;
 	std::unordered_map<std::string, std::string> m_values;
@@ -74,9 +77,11 @@ private:
 		}
 	}
 	void dump() {
-		static bool done = false;
-		if (done)
+#if 1
+		if (m_donecount >= 4) {
 			return;
+		}
+#endif
 		uint32_t cs, ip, ds, es, ax, cx, si, di, flags;
 		std::string current_state = m_values[m_syms["uut.cpu0.cpuproc.current_state"]];
 		std::string next_state = m_values[m_syms["uut.cpu0.cpuproc.next_state"]];
@@ -90,19 +95,25 @@ private:
 		di = toint(m_values[m_syms["uut.cpu0.cpudpath.di_s[15:0]"]]);
 		flags = toint(m_values[m_syms["uut.cpu0.cpudpath.ccbus[15:0]"]]);
 		int clrop = toint(m_values[m_syms["uut.cpu0.clrop"]]);
-		static int last_clrop = 0;
 		uint32_t pc = cs * 16 + ip;
-		if (pc >= 0xffffa) done = true;
-		static int last_latchabus = 0;
-//		if (current_state == "sexecute") {
+		if (pc >= 0xffffc) {
+//			printf("pc=%" PRIx32 ", donecount=%d\n", pc, m_donecount);
+			m_donecount++;
+		}
 		if (current_state == "sdecode") {
-//		if (current_state == "") {
-//			printf("exec\n");
-//			printf("decode\n");
-//			printf("curr=%s next=%s\n", current_state.c_str(), next_state.c_str());
 			if (m_queue.size() > 0) {
+#if 1
+				if (m_opcode.size() == 0) {
+				printf("%3" PRIu64 ":", m_time / 1000000);
+				printf("cs=%04" PRIx32 " ip=%04" PRIx32 " ", cs, ip);
+				printf("ds=%04" PRIx32 " es=%04" PRIx32 " ", ds, es);
+				printf("ax=%04" PRIx32 " cx=%04" PRIx32 " ", ax, cx);
+				printf("si=%04" PRIx32 " di=%04" PRIx32 " ", si, di);
+				printf("fl=%04" PRIx32 " ", flags);
+				print_flags(flags);
+				}
+#endif
 //				printf("queue len=%d\n", (int)m_queue.size());
-//				m_opcode = m_queue;
 				m_opcode.insert(m_opcode.end(), m_queue.begin(), m_queue.end());
 				m_queue.clear();
 			}
@@ -111,23 +122,31 @@ private:
 		}
 //		uint32_t abus = toint(m_values[m_syms["uut.cpu0.abus[19:0]"]]);
 		int latchabus = toint(m_values[m_syms["uut.cpu0.cpubiu.latchabus"]]);
-		if (last_latchabus == 1 && latchabus == 0) {
+		if (m_last_latchabus == 1 && latchabus == 0) {
 //			printf("latch cur state %s\n", current_state.c_str());
 //			printf("latch next state %s\n", next_state.c_str());
 			uint8_t dbus_in = toint(m_values[m_syms["uut.cpu0.cpubiu.dbus_in[7:0]"]]);
 			if (next_state == "sopcode") {
 #if 0
 				uint32_t abus = toint(m_values[m_syms["uut.cpu0.abus[19:0]"]]);
+#if 0
+				printf("cs=%04" PRIx32 " ip=%04" PRIx32 " ", cs, ip);
+				printf("ds=%04" PRIx32 " es=%04" PRIx32 " ", ds, es);
+				printf("ax=%04" PRIx32 " cx=%04" PRIx32 " ", ax, cx);
+				printf("si=%04" PRIx32 " di=%04" PRIx32 " ", si, di);
+				printf("fl=%04" PRIx32 " ", flags);
+#endif
 				printf("push queue %02x at abus=%x\n", (int)dbus_in, (int)abus);
 #endif
 				m_queue.push_back(dbus_in);
 			}
 		}
-		last_latchabus = latchabus;
-		if (last_clrop == 0 && clrop == 1) {
+		m_last_latchabus = latchabus;
+		if (m_last_clrop == 0 && clrop == 1) {
 			if (m_time == 0)
 				return;
 //			printf("\n");
+#if 0
 			printf("%3" PRIu64 ":", m_time / 1000000);
 			printf("cs=%04" PRIx32 " ip=%04" PRIx32 " ", cs, ip);
 			printf("ds=%04" PRIx32 " es=%04" PRIx32 " ", ds, es);
@@ -135,6 +154,7 @@ private:
 			printf("si=%04" PRIx32 " di=%04" PRIx32 " ", si, di);
 			printf("fl=%04" PRIx32 " ", flags);
 			print_flags(flags);
+#endif
 //			printf("next_state=%s", next_state.c_str());
 #if 1
 			for (auto& it : m_opcode) {
@@ -162,7 +182,7 @@ private:
 #endif
 			printf("\n");
 		}
-		last_clrop = clrop;
+		m_last_clrop = clrop;
 	}
 	std::string flatten(const std::vector<std::string>& path) const {
 		std::string res;
@@ -172,7 +192,7 @@ private:
 		return res;
 	}
 public:
-	MyVCDParser(const char *vcd_file) : VCDParser(vcd_file), m_time(0) {}
+	MyVCDParser(const char *vcd_file) : VCDParser(vcd_file), m_time(0), m_donecount(0), m_last_clrop(0), m_last_latchabus(0) {}
 
 	virtual void Scope(const std::string& scope) {
 		m_scope.push_back(scope);
