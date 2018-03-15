@@ -104,7 +104,7 @@ private:
 			if (m_queue.size() > 0) {
 #if 1
 				if (m_opcode.size() == 0) {
-				printf("%3" PRIu64 ":", m_time / 1000000);
+//				printf("%3" PRIu64 ":", m_time / 1000000);
 				printf("cs=%04" PRIx32 " ip=%04" PRIx32 " ", cs, ip);
 				printf("ds=%04" PRIx32 " es=%04" PRIx32 " ", ds, es);
 				printf("ax=%04" PRIx32 " cx=%04" PRIx32 " ", ax, cx);
